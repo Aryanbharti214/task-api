@@ -1,5 +1,13 @@
 const express=require('express')
 const router=express.Router()
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('../swagger.json');
+
+router.use(
+    '/api-docs',
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerDocument)
+);
 const {getAllTasks,getTaskById,createTask,updateTask,deleteTask}=require('../controllers/task.controller')
 router.get('/',(req,res)=>{
     return res.status(200).json({
