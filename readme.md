@@ -186,13 +186,8 @@ Since no database is used, all tasks are removed whenever the server is restarte
 
 # Swagger UI Screenshot
 
-Add a screenshot of the Swagger UI after running the application.
-
-Example:
-
 ```md
-![Swagger UI](docs/Screenshot%202026-07-19%20at%207.40.39 PM.png)
-![Swagger UI](docs/Screenshot%202026-07-19%20at%207.40.50 PM.png)
+![Swagger UI](docs/swagger-screenshot.png)
 ```
 
 Project structure:
