@@ -1,16 +1,16 @@
 let tasks=[
     {
-        id:1,
+        id:0,
         title:"task1",
         done:false
     },
     {
-        id:2,
+        id:1,
         title:"task2",
         done:true
     },
     {
-        id:3,
+        id:2,
         title:"task3",
         done:true
     }
@@ -36,4 +36,23 @@ function getTaskById(req,res){
     })
 }
 
-module.exports={getAllTasks,getTaskById}
+function createTask(req,res){
+    const {title}=req.body;
+    if(!title){
+        return res.status(400).json({
+            message:"Kindly provide the title for the task"
+        })
+    }
+    const task=tasks.push({
+        id:tasks.length,
+        title:title,
+        done:false
+    })
+    return res.status(201).json({
+        message:"Task Created successfully",
+        task:task
+    })
+
+}
+
+module.exports={getAllTasks,getTaskById,createTask}
