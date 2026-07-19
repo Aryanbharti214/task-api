@@ -187,7 +187,8 @@ Since no database is used, all tasks are removed whenever the server is restarte
 # Swagger UI Screenshot
 
 ```md
-![Swagger UI](docs/swagger-screenshot.png)
+![Swagger UI](./docs/swagger-screenshot.png)
+![Swagger UI](./docs/Screenshot%202026-07-19%20at%207.40.50 PM.png)
 ```
 
 Project structure:
