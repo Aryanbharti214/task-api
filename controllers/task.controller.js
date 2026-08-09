@@ -77,24 +77,51 @@ function getTaskById(req, res) {
         task: formatTask(row)
     });
 }
-function createTask(req,res){
-    const {title}=req.body;
-    if(!title){
-        return res.status(400).json({
-            message:"Kindly provide the title for the task"
-        })
-    }
-    const task={
-        id:tasks.length,
-        title:title,
-        done:false
-    }
-    tasks.push(task);
-    return res.status(201).json({
-        message:"Task Created successfully",
-        task:task
-    })
+// function createTask(req,res){
+//     const {title}=req.body;
+//     if(!title){
+//         return res.status(400).json({
+//             message:"Kindly provide the title for the task"
+//         })
+//     }
+//     const task={
+//         id:tasks.length,
+//         title:title,
+//         done:false
+//     }
+//     tasks.push(task);
+//     return res.status(201).json({
+//         message:"Task Created successfully",
+//         task:task
+//     })
 
+// }
+function createTask(req, res) {
+    const { title } = req.body;
+
+    if (
+        typeof title !== "string" ||
+        title.trim() === ""
+    ) {
+        return res.status(400).json({
+            message: "Kindly provide the title for the task"
+        });
+    }
+
+    const result = db
+        .prepare(
+            "INSERT INTO tasks (title, done) VALUES (?, ?)"
+        )
+        .run(title, 0);
+
+    const row = db
+        .prepare("SELECT * FROM tasks WHERE id = ?")
+        .get(result.lastInsertRowid);
+
+    return res.status(201).json({
+        message: "Task Created successfully",
+        task: formatTask(row)
+    });
 }
 
 function updateTask(req,res){
