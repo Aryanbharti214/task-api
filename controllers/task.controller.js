@@ -11,23 +11,23 @@ function formatTask(row) {
         done: Boolean(row.done)
     };
 }
-let tasks=[
-    {
-        id:0,
-        title:"task1",
-        done:false
-    },
-    {
-        id:1,
-        title:"task2",
-        done:true
-    },
-    {
-        id:2,
-        title:"task3",
-        done:true
-    }
-];
+// let tasks=[
+//     {
+//         id:0,
+//         title:"task1",
+//         done:false
+//     },
+//     {
+//         id:1,
+//         title:"task2",
+//         done:true
+//     },
+//     {
+//         id:2,
+//         title:"task3",
+//         done:true
+//     }
+// ];
 
 // function getAllTasks(req,res){
 //     return res.status(200).json({
@@ -124,41 +124,125 @@ function createTask(req, res) {
     });
 }
 
-function updateTask(req,res){
-    const id=Number(req.params.id);
-    const {title,done}=req.body;
-    if(title===undefined&&done===undefined){
-        return res.status(400).json({
-            message:"kindly fill one field"
-        })
-    }
-    for(let i=0;i<tasks.length;i++){
-        if(id===tasks[i].id){
-            tasks[i]={
-                id:id,
-                title:title!==undefined?title:tasks[i].title,
-                done:done!==undefined?done:tasks[i].done
-            }
-            return res.status(200).json({
-                message:"task updated successfully",
-                task:tasks[i]
-            })
-        }
-    }
-    return res.status(404).json({
-        message:"Task not found invalid id"
-    })
-}
+// function updateTask(req,res){
+//     const id=Number(req.params.id);
+//     const {title,done}=req.body;
+//     if(title===undefined&&done===undefined){
+//         return res.status(400).json({
+//             message:"kindly fill one field"
+//         })
+//     }
+//     for(let i=0;i<tasks.length;i++){
+//         if(id===tasks[i].id){
+//             tasks[i]={
+//                 id:id,
+//                 title:title!==undefined?title:tasks[i].title,
+//                 done:done!==undefined?done:tasks[i].done
+//             }
+//             return res.status(200).json({
+//                 message:"task updated successfully",
+//                 task:tasks[i]
+//             })
+//         }
+//     }
+//     return res.status(404).json({
+//         message:"Task not found invalid id"
+//     })
+// }
+function updateTask(req, res) {
+    const id = Number(req.params.id);
+    const { title, done } = req.body;
 
-function deleteTask(req,res){
-    const id=Number(req.params.id);
-    let length=tasks.length;
-    tasks=tasks.filter(task=> task.id!==id);
-    if(length===tasks.length){
-        return res.status(404).json({
-            message:"id Not found"
-        })
+    if (title === undefined && done === undefined) {
+        return res.status(400).json({
+            message: "kindly fill one field"
+        });
     }
+
+    if (
+        title !== undefined &&
+        (
+            typeof title !== "string" ||
+            title.trim() === ""
+        )
+    ) {
+        return res.status(400).json({
+            message: "Invalid title"
+        });
+    }
+
+    if (
+        done !== undefined &&
+        typeof done !== "boolean"
+    ) {
+        return res.status(400).json({
+            message: "done must be boolean"
+        });
+    }
+
+    const existingTask = db
+        .prepare("SELECT * FROM tasks WHERE id = ?")
+        .get(id);
+
+    if (!existingTask) {
+        return res.status(404).json({
+            error: "Task not found"
+        });
+    }
+
+    const updatedTitle =
+        title !== undefined
+            ? title
+            : existingTask.title;
+
+    const updatedDone =
+        done !== undefined
+            ? Number(done)
+            : existingTask.done;
+
+    db.prepare(`
+        UPDATE tasks
+        SET title = ?, done = ?
+        WHERE id = ?
+    `).run(
+        updatedTitle,
+        updatedDone,
+        id
+    );
+
+    const updatedTask = db
+        .prepare("SELECT * FROM tasks WHERE id = ?")
+        .get(id);
+
+    return res.status(200).json({
+        message: "task updated successfully",
+        task: formatTask(updatedTask)
+    });
+}
+// function deleteTask(req,res){
+//     const id=Number(req.params.id);
+//     let length=tasks.length;
+//     tasks=tasks.filter(task=> task.id!==id);
+//     if(length===tasks.length){
+//         return res.status(404).json({
+//             message:"id Not found"
+//         })
+//     }
+//     return res.status(204).send();
+// }
+function deleteTask(req, res) {
+    const id = Number(req.params.id);
+
+    const result = db
+        .prepare("DELETE FROM tasks WHERE id = ?")
+        .run(id);
+
+    if (result.changes === 0) {
+        return res.status(404).json({
+            error: "Task not found"
+        });
+    }
+
     return res.status(204).send();
 }
 module.exports={getAllTasks,getTaskById,createTask,updateTask,deleteTask}
