@@ -1,3 +1,16 @@
+const db = require("../db");
+
+function formatTask(row) {
+    if (!row) {
+        return null;
+    }
+
+    return {
+        id: row.id,
+        title: row.title,
+        done: Boolean(row.done)
+    };
+}
 let tasks=[
     {
         id:0,
@@ -16,26 +29,54 @@ let tasks=[
     }
 ];
 
-function getAllTasks(req,res){
-    return res.status(200).json({
-        message:"All Tasks",
-        taskList:tasks
-    })
-}
-function getTaskById(req,res){
-    const id=Number(req.params.id);
-    for(let i=0;i<tasks.length;i++){
-        if(tasks[i].id===id){
-            return res.status(200).json({
-                task:tasks[i]
-            })
-        }
-    }
-    return res.status(404).json({
-        error:`Task ${id} not found`
-    })
-}
+// function getAllTasks(req,res){
+//     return res.status(200).json({
+//         message:"All Tasks",
+//         taskList:tasks
+//     })
+// }
+function getAllTasks(req, res) {
+    const rows = db
+        .prepare("SELECT * FROM tasks")
+        .all();
 
+    const tasks = rows.map(formatTask);
+
+    return res.status(200).json({
+        message: "All Tasks",
+        taskList: tasks
+    });
+}
+// function getTaskById(req,res){
+//     const id=Number(req.params.id);
+//     for(let i=0;i<tasks.length;i++){
+//         if(tasks[i].id===id){
+//             return res.status(200).json({
+//                 task:tasks[i]
+//             })
+//         }
+//     }
+//     return res.status(404).json({
+//         error:`Task ${id} not found`
+//     })
+// }
+function getTaskById(req, res) {
+    const id = Number(req.params.id);
+
+    const row = db
+        .prepare("SELECT * FROM tasks WHERE id = ?")
+        .get(id);
+
+    if (!row) {
+        return res.status(404).json({
+            error: "Task not found"
+        });
+    }
+
+    return res.status(200).json({
+        task: formatTask(row)
+    });
+}
 function createTask(req,res){
     const {title}=req.body;
     if(!title){
