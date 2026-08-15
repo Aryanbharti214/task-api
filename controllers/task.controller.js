@@ -113,32 +113,36 @@ async function getTaskById(req, res) {
 //     })
 
 // }
-function createTask(req, res) {
-    const { title } = req.body;
+async function createTask(req, res) {
+    try {
+        const { title } = req.body;
 
-    if (
-        typeof title !== "string" ||
-        title.trim() === ""
-    ) {
-        return res.status(400).json({
-            message: "Kindly provide the title for the task"
+        if (
+            typeof title !== "string" ||
+            title.trim() === ""
+        ) {
+            return res.status(400).json({
+                message: "Kindly provide the title for the task"
+            });
+        }
+
+        const task = await taskRepository.create(
+            title.trim(),
+            false
+        );
+
+        return res.status(201).json({
+            message: "Task Created successfully",
+            task
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            error: "Internal server error"
         });
     }
-
-    const result = db
-        .prepare(
-            "INSERT INTO tasks (title, done) VALUES (?, ?)"
-        )
-        .run(title, 0);
-
-    const row = db
-        .prepare("SELECT * FROM tasks WHERE id = ?")
-        .get(result.lastInsertRowid);
-
-    return res.status(201).json({
-        message: "Task Created successfully",
-        task: formatTask(row)
-    });
 }
 
 // function updateTask(req,res){
@@ -166,75 +170,82 @@ function createTask(req, res) {
 //         message:"Task not found invalid id"
 //     })
 // }
-function updateTask(req, res) {
-    const id = Number(req.params.id);
-    const { title, done } = req.body;
+async function updateTask(req, res) {
+    try {
+        const id = Number(req.params.id);
+        const { title, done } = req.body;
 
-    if (title === undefined && done === undefined) {
-        return res.status(400).json({
-            message: "kindly fill one field"
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(400).json({
+                error: "Invalid task id"
+            });
+        }
+
+        if (title === undefined && done === undefined) {
+            return res.status(400).json({
+                message: "kindly fill one field"
+            });
+        }
+
+        if (
+            title !== undefined &&
+            (
+                typeof title !== "string" ||
+                title.trim() === ""
+            )
+        ) {
+            return res.status(400).json({
+                message: "Invalid title"
+            });
+        }
+
+        if (
+            done !== undefined &&
+            typeof done !== "boolean"
+        ) {
+            return res.status(400).json({
+                message: "done must be boolean"
+            });
+        }
+
+        const existingTask =
+            await taskRepository.findById(id);
+
+        if (!existingTask) {
+            return res.status(404).json({
+                error: "Task not found"
+            });
+        }
+
+        const updatedTitle =
+            title !== undefined
+                ? title.trim()
+                : existingTask.title;
+
+        const updatedDone =
+            done !== undefined
+                ? done
+                : existingTask.done;
+
+        const updatedTask =
+            await taskRepository.update(
+                id,
+                updatedTitle,
+                updatedDone
+            );
+
+        return res.status(200).json({
+            message: "task updated successfully",
+            task: updatedTask
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            error: "Internal server error"
         });
     }
-
-    if (
-        title !== undefined &&
-        (
-            typeof title !== "string" ||
-            title.trim() === ""
-        )
-    ) {
-        return res.status(400).json({
-            message: "Invalid title"
-        });
-    }
-
-    if (
-        done !== undefined &&
-        typeof done !== "boolean"
-    ) {
-        return res.status(400).json({
-            message: "done must be boolean"
-        });
-    }
-
-    const existingTask = db
-        .prepare("SELECT * FROM tasks WHERE id = ?")
-        .get(id);
-
-    if (!existingTask) {
-        return res.status(404).json({
-            error: "Task not found"
-        });
-    }
-
-    const updatedTitle =
-        title !== undefined
-            ? title
-            : existingTask.title;
-
-    const updatedDone =
-        done !== undefined
-            ? Number(done)
-            : existingTask.done;
-
-    db.prepare(`
-        UPDATE tasks
-        SET title = ?, done = ?
-        WHERE id = ?
-    `).run(
-        updatedTitle,
-        updatedDone,
-        id
-    );
-
-    const updatedTask = db
-        .prepare("SELECT * FROM tasks WHERE id = ?")
-        .get(id);
-
-    return res.status(200).json({
-        message: "task updated successfully",
-        task: formatTask(updatedTask)
-    });
 }
 // function deleteTask(req,res){
 //     const id=Number(req.params.id);
@@ -247,19 +258,33 @@ function updateTask(req, res) {
 //     }
 //     return res.status(204).send();
 // }
-function deleteTask(req, res) {
-    const id = Number(req.params.id);
+async function deleteTask(req, res) {
+    try {
+        const id = Number(req.params.id);
 
-    const result = db
-        .prepare("DELETE FROM tasks WHERE id = ?")
-        .run(id);
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(400).json({
+                error: "Invalid task id"
+            });
+        }
 
-    if (result.changes === 0) {
-        return res.status(404).json({
-            error: "Task not found"
+        const deletedCount =
+            await taskRepository.deleteById(id);
+
+        if (deletedCount === 0) {
+            return res.status(404).json({
+                error: "Task not found"
+            });
+        }
+
+        return res.status(204).send();
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            error: "Internal server error"
         });
     }
-
-    return res.status(204).send();
 }
 module.exports={getAllTasks,getTaskById,createTask,updateTask,deleteTask}
