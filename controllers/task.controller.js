@@ -1,4 +1,4 @@
-const db = require("../db");
+const taskRepository = require("../repositories/task.repository");
 
 function formatTask(row) {
     if (!row) {
@@ -35,17 +35,21 @@ function formatTask(row) {
 //         taskList:tasks
 //     })
 // }
-function getAllTasks(req, res) {
-    const rows = db
-        .prepare("SELECT * FROM tasks")
-        .all();
+async function getAllTasks(req, res) {
+    try {
+        const tasks = await taskRepository.findAll();
 
-    const tasks = rows.map(formatTask);
+        return res.status(200).json({
+            message: "All Tasks",
+            taskList: tasks
+        });
+    } catch (error) {
+        console.error(error);
 
-    return res.status(200).json({
-        message: "All Tasks",
-        taskList: tasks
-    });
+        return res.status(500).json({
+            error: "Internal server error"
+        });
+    }
 }
 // function getTaskById(req,res){
 //     const id=Number(req.params.id);
@@ -60,22 +64,35 @@ function getAllTasks(req, res) {
 //         error:`Task ${id} not found`
 //     })
 // }
-function getTaskById(req, res) {
-    const id = Number(req.params.id);
+async function getTaskById(req, res) {
+    try {
+        const id = Number(req.params.id);
 
-    const row = db
-        .prepare("SELECT * FROM tasks WHERE id = ?")
-        .get(id);
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(400).json({
+                error: "Invalid task id"
+            });
+        }
 
-    if (!row) {
-        return res.status(404).json({
-            error: "Task not found"
+        const task = await taskRepository.findById(id);
+
+        if (!task) {
+            return res.status(404).json({
+                error: "Task not found"
+            });
+        }
+
+        return res.status(200).json({
+            task
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            error: "Internal server error"
         });
     }
-
-    return res.status(200).json({
-        task: formatTask(row)
-    });
 }
 // function createTask(req,res){
 //     const {title}=req.body;
