@@ -1,19 +1,25 @@
-const express=require('express');
-const app=express();
-const port=3000;
+const express = require("express");
+const { initDatabase } = require("./db");
 
-require("./db");
+const app = express();
+const port = process.env.PORT || 3000;
 
-const taskRoutes=require('./routes/task.routes')
-app.use(express.json())
+const taskRoutes = require("./routes/task.routes");
 
-app.use('/',taskRoutes);
+app.use(express.json());
+app.use("/", taskRoutes);
 
-// app.get('/',(req,res)=>{
-//     res.status(200).send("Hello World")
-// })
+async function startServer() {
+    try {
+        await initDatabase();
 
-app.listen(port,()=>{
-    console.log(`Server is Running on port ${port}`);
-    
-})
+        app.listen(port, () => {
+            console.log(`Server is running on port ${port}`);
+        });
+    } catch (error) {
+        console.error("Failed to start server:", error);
+        process.exit(1);
+    }
+}
+
+startServer();

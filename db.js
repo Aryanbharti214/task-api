@@ -1,35 +1,44 @@
-const Database = require("better-sqlite3");
-const path = require("path");
+const { Pool } = require("pg");
 
-const dbPath = path.join(__dirname, "tasks.db");
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL
+});
 
-const db = new Database(dbPath);
+async function initDatabase() {
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS tasks (
+            id SERIAL PRIMARY KEY,
+            title TEXT NOT NULL,
+            done BOOLEAN NOT NULL DEFAULT FALSE
+        )
+    `);
 
-// Create table if it does not already exist
-db.exec(`
-    CREATE TABLE IF NOT EXISTS tasks (
-        id INTEGER PRIMARY KEY,
-        title TEXT NOT NULL,
-        done BOOLEAN NOT NULL DEFAULT 0 CHECK (done IN (0, 1))
-    )
-`);
-
-// Check whether the table is empty
-const row = db
-    .prepare("SELECT COUNT(*) AS count FROM tasks")
-    .get();
-
-// Seed only when there are no tasks
-if (row.count === 0) {
-    const insertTask = db.prepare(
-        "INSERT INTO tasks (title, done) VALUES (?, ?)"
+    const result = await pool.query(
+        "SELECT COUNT(*) FROM tasks"
     );
 
-    insertTask.run("task1", 0);
-    insertTask.run("task2", 1);
-    insertTask.run("task3", 1);
+    const count = Number(result.rows[0].count);
 
-    console.log("Database seeded with example tasks");
+    if (count === 0) {
+        await pool.query(`
+            INSERT INTO tasks (title, done)
+            VALUES
+                ($1, $2),
+                ($3, $4),
+                ($5, $6)
+        `, [
+            "task1", false,
+            "task2", true,
+            "task3", true
+        ]);
+
+        console.log("Database seeded with example tasks");
+    }
+
+    console.log("PostgreSQL connected");
 }
 
-module.exports = db;
+module.exports = {
+    pool,
+    initDatabase
+};
