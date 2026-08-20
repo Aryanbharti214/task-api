@@ -10,10 +10,14 @@ const port = process.env.PORT || 3000;
 
 const taskRoutes = require("./routes/task.routes");
 const authRoutes = require("./routes/auth.routes");
+const publicRoutes = require("./routes/public.routes");
+const protectedRoutes = require("./routes/protected.routes");
 
 app.use(express.json());
 
 app.use("/auth", authRoutes);
+app.use("/public", publicRoutes);
+app.use("/protected", protectedRoutes);
 
 app.use("/", taskRoutes);
 
