@@ -1,5 +1,9 @@
+require("dotenv").config();
+
 const express = require("express");
 const { initDatabase } = require("./db");
+
+require("./config/supabase");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -7,11 +11,14 @@ const port = process.env.PORT || 3000;
 const taskRoutes = require("./routes/task.routes");
 
 app.use(express.json());
+
 app.use("/", taskRoutes);
 
 async function startServer() {
     try {
         await initDatabase();
+
+        console.log("Supabase client initialized");
 
         app.listen(port, () => {
             console.log(`Server is running on port ${port}`);

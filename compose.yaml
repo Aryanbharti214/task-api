@@ -4,6 +4,9 @@ services:
     ports:
       - "3000:3000"
 
+    env_file:
+      - .env
+
     environment:
       DATABASE_URL: postgres://postgres:dev@db:5432/tasks
       PORT: 3000
@@ -23,4 +26,3 @@ services:
 
 volumes:
   taskdata:
-  
