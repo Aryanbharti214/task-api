@@ -1056,3 +1056,16 @@ The SQLite assets are retained only to document the project's evolution.
 * CI/CD pipeline
 * Production Docker image optimization
 * Redis caching
+
+
+1. A user signs up or logs in through the Express API.
+2. Express forwards the credentials to Supabase Auth.
+3. Supabase validates the credentials and returns an access token and refresh token.
+4. The client sends the access token as:
+
+   Authorization: Bearer <token>
+
+5. authMiddleware extracts the JWT.
+6. The middleware verifies it using Supabase auth.getUser(token).
+7. A valid user's information is attached to req.user.
+8. The protected controller executes only after successful authentication.
