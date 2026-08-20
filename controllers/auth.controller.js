@@ -79,8 +79,29 @@ async function login(req, res) {
         });
     }
 }
+async function logout(req, res) {
+    try {
+        const { error } = await supabase.auth.signOut();
+
+        if (error) {
+            return res.status(500).json({
+                error: error.message
+            });
+        }
+
+        return res.status(204).send();
+
+    } catch (error) {
+        console.error("Logout error:", error);
+
+        return res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+}
 
 module.exports = {
     signup,
-    login
+    login,
+    logout
 };
